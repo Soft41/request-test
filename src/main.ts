@@ -5,10 +5,7 @@ import {
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import fastifyRedis from '@fastify/redis';
-import Redis from 'ioredis';
 import { ValidationPipe } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
   const PORT = 3100;
@@ -18,16 +15,6 @@ async function bootstrap() {
     AppModule,
     adapter,
   );
-
-  const configService = app.get(ConfigService);
-
-  const redis = new Redis({
-    host: configService.get('REDIS_HOST'),
-    port: configService.get('REDIS_PORT'),
-  });
-  await app.register(fastifyRedis, {
-    client: redis,
-  });
 
   app.setGlobalPrefix('api');
 

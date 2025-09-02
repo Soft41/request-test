@@ -2,14 +2,17 @@ import { Injectable } from '@nestjs/common';
 import { RequestsRepository } from './requests.repository';
 import { CreateRequestDto } from './dto/create-request.dto';
 import { RequestStatus } from './enums/request-status.enum';
-import { PaginationDto } from '../common/dto/pagination.dto';
+import { PaginatedResponse, PaginationDto } from '../common/dto/pagination.dto';
 import { RabbitMQService } from '../rabbitmq/rabbitmq.service';
+import { RedisService } from '../redis/redis.service';
+import { RequestEntity } from './entities/request.entity';
 
 @Injectable()
 export class RequestsService {
   constructor(
     private readonly requestsRepo: RequestsRepository,
     private readonly rabbitService: RabbitMQService,
+    private readonly redisService: RedisService,
   ) {}
 
   async create(createDto: CreateRequestDto) {
@@ -22,8 +25,22 @@ export class RequestsService {
     return request;
   }
 
-  async findAllPaginated(paginatedObject: PaginationDto) {
-    return this.requestsRepo.findAllPaginated(paginatedObject);
+  async findAllPaginated(
+    pagination: PaginationDto,
+  ): Promise<PaginatedResponse<RequestEntity>> {
+    const cacheKey = `requests:page:${pagination.page}:limit:${pagination.limit}`;
+
+    const cached =
+      await this.redisService.get<PaginatedResponse<RequestEntity>>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const data = await this.requestsRepo.findAllPaginated(pagination);
+
+    await this.redisService.set(cacheKey, data, 60);
+
+    return data;
   }
 
   async updateStatus(id: string, status: RequestStatus) {
