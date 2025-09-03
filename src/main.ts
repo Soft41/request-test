@@ -19,8 +19,8 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   const config = new DocumentBuilder()
-    .setTitle('Lake API')
-    .setDescription('Lake API Documentation')
+    .setTitle('Request manager')
+    .setDescription('Request manager API Documentation')
     .setVersion('1.0')
     .build();
 
